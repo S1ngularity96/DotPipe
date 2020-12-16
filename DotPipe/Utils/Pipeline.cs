@@ -14,8 +14,6 @@ namespace DotPipe
         {
             this.PipeHandler = new List<Action<PipeContext>>();
             this.Handlers = new List<Handler>();
-
-            Handler test = (ref PipeContext context) => { };
         }
 
         /// <summary>
@@ -31,9 +29,21 @@ namespace DotPipe
             }
         }
 
+        ///<summary> Executes Pipeline
+        ///<exception>Throws Exception if Pipeline has been aborted</exception>
         public void Execute()
         {
             PipeContext context = new PipeContext();
+            ExecPipeline(context);
+        }
+
+        ///<summary> Executes Pipeline with given Context
+        ///<exception>Throws Exception if Pipeline has been aborted</exception>
+        public void Execute(PipeContext context){
+            ExecPipeline(context);
+        }
+
+        private void ExecPipeline(PipeContext context){
             foreach (var handler in Handlers)
             {
                 try
@@ -47,7 +57,12 @@ namespace DotPipe
                         Console.WriteLine(ex.Message);
 
                     }
-                }finally{
+                }
+                catch (Exception ex){
+                    throw ex;
+                }
+                finally
+                {
                     //Clear any data that exists in Context
                     context.ClearContext();
                 }
