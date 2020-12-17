@@ -44,7 +44,7 @@ namespace DotPipe
             {
                 return data[key];
             }
-            throw new PipeDataException();
+            throw new PipeDataException($"Data with Key {key}  does not exist");
         }
         
         public void Abort()
