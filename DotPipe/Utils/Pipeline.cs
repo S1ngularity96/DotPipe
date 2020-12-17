@@ -9,6 +9,7 @@ namespace DotPipe
         public delegate void Handler(ref PipeContext context);
         private List<Handler> Handlers;
         private List<Action<PipeContext>> PipeHandler;
+        private bool executionFinished = false;
 
         public Pipeline()
         {
@@ -16,10 +17,8 @@ namespace DotPipe
             this.Handlers = new List<Handler>();
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="func">Infinite List of Handlers</param>
+        /// <summary>Append one or many handler to Pipeline</summary>
+        /// <param name="func" cref="Handler">Infinite List of Handlers</param>
         public void Use(params Handler[] func)
         {
 
@@ -29,7 +28,22 @@ namespace DotPipe
             }
         }
 
-        ///<summary> Executes Pipeline
+        ///<summary>Removes all Handlers from the Pipeline</summary>
+        public void Clear()
+        {
+            this.Handlers.Clear();
+        }
+
+        ///<summary>Remove the last inserted Handler from Pipeline</summary>
+        public void PopHandler()
+        {
+            if (this.Handlers.Count > 1)
+            {
+                this.Handlers.RemoveAt(this.Handlers.Count - 1);
+            }
+        }
+
+        ///<summary> Executes Pipeline </summary>
         ///<exception>Throws Exception if Pipeline has been aborted</exception>
         public void Execute()
         {
@@ -37,38 +51,40 @@ namespace DotPipe
             ExecPipeline(context);
         }
 
-        ///<summary> Executes Pipeline with given Context
+        ///<summary> Executes Pipeline with given Context </summary>
         ///<exception>Throws Exception if Pipeline has been aborted</exception>
-        public void Execute(PipeContext context){
+        public void Execute(PipeContext context)
+        {
             ExecPipeline(context);
         }
 
-        private void ExecPipeline(PipeContext context){
-            foreach (var handler in Handlers)
+        public bool isFinished(){
+            return executionFinished;
+        }
+
+        private void ExecPipeline(PipeContext context)
+        {
+            try
             {
-                try
+                foreach (var handler in Handlers)
                 {
                     handler(ref context);
                 }
-                catch (PipeAbortException ex)
+                executionFinished = true;
+            }
+            catch (PipeAbortException ex)
+            {
+                if (ex.Message != null)
                 {
-                    if (ex.Message != null)
-                    {
-                        Console.WriteLine(ex.Message);
-
-                    }
+                    System.Console.WriteLine(ex.Message);
                 }
-                catch (Exception ex){
-                    throw ex;
-                }
-                finally
-                {
-                    //Clear any data that exists in Context
-                    context.ClearContext();
-                }
-
+                executionFinished = false;
+            }
+            catch (Exception ex)
+            {   
+                executionFinished = false;
+                throw ex;
             }
         }
-
     }
 }
